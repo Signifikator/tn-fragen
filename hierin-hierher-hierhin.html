@@ -51,6 +51,24 @@ details{margin-top:16px;background:var(--soft);border-radius:14px;padding:14px 1
 summary{cursor:pointer;font-weight:700;min-height:28px}
 .sum{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:10px}
 .sum div{background:var(--bg);border-radius:12px;padding:14px;border:1px solid var(--line)}
+.score{display:inline-block;background:var(--soft);border-radius:99px;padding:6px 16px;font-weight:700;margin-bottom:6px}
+.quiz{padding-left:1.4em}
+.quiz li{margin:18px 0;padding:14px 16px;background:var(--soft);border-radius:14px;border-left:6px solid transparent}
+.quiz li.right{border-left-color:var(--in)}
+.quiz li.tried{border-left-color:var(--err)}
+.quiz .sent{font-size:17px}
+.slot{display:inline-block;min-width:90px;border-bottom:2px solid var(--mute);text-align:center;font-weight:700;padding:0 4px}
+.opts{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
+.opts button,.reset{min-height:44px;padding:8px 16px;border-radius:99px;border:2px solid var(--line);background:var(--bg);color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.opts button:focus-visible,.reset:focus-visible{outline:3px solid var(--hin);outline-offset:2px}
+.opts button.no{border-color:var(--err);color:var(--err);text-decoration:line-through}
+.opts button.yes{border-color:var(--in);background:var(--in);color:var(--bg)}
+.opts button:disabled{cursor:default}
+.fb{margin:10px 0 0;font-size:15.5px}
+.fb.ok{color:var(--in)}.fb.bad{color:var(--err)}
+.fb .fr{margin-top:4px}
+.reset{margin-top:8px}
+@media(prefers-reduced-motion:no-preference){.quiz li.right{animation:pop .35s ease}@keyframes pop{50%{transform:scale(1.015)}}}
 @media(max-width:820px){.cards,.sum{grid-template-columns:minmax(0,1fr)}.hero{grid-template-columns:minmax(0,1fr)}}
 @media(max-width:600px){table{font-size:14px}.stack thead{display:none}.stack tr{display:grid;padding-block:10px;border-bottom:1px solid var(--line)}.stack td{display:flow-root;border:0;padding:3px 0;padding-inline-start:7em;text-align:start}.stack td::before{content:attr(data-l);float:inline-start;width:6.5em;margin-inline-start:-7em;font-weight:700;color:var(--mute)}.stack td:empty{display:none}}
 </style>
@@ -162,19 +180,11 @@ summary{cursor:pointer;font-weight:700;min-height:28px}
 </div></section>
 
 <section class="band" style="padding-top:0"><div class="wrap">
- <h2>Kurze Übung</h2>
- <p>Ergänze: <strong>hier – hierin – hierher – hierhin</strong></p>
- <ol class="ex">
-  <li>Kannst du kurz <span class="gap"></span> kommen? Ich brauche deine Hilfe.</li>
-  <li>Die Präsentation ist gut. <span class="gap"></span> fehlt aber eine klare Zusammenfassung.</li>
-  <li>Häng die Jacke einfach <span class="gap"></span>, an den Haken.</li>
-  <li>Wohnst du schon lange <span class="gap"></span>?</li>
-  <li>Wie bist du gestern <span class="gap"></span> gekommen – mit dem Bus?</li>
-  <li>Stell deinen Laptop ruhig <span class="gap"></span>, da ist eine Steckdose.</li>
- </ol>
- <details><summary>Lösungen anzeigen</summary>
-  <p>1. <span class="her">hierher</span> · 2. <span class="in">Hierin</span> · 3. <span class="hin">hierhin</span> · 4. <span class="h">hier</span> · 5. <span class="her">hierher</span> · 6. <span class="hin">hierhin</span></p>
- </details>
+ <h2>Übung mit Feedback</h2>
+ <p>Klicke auf das passende Wort. Du bekommst sofort eine Rückmeldung und kannst es noch einmal versuchen.</p>
+ <div class="score" id="score" aria-live="polite">0 von 6 gelöst</div>
+ <ol class="quiz" id="quiz"></ol>
+ <button class="reset" id="reset" type="button">Neu starten</button>
 </div></section>
 
 <section class="band" style="padding-top:0"><div class="wrap">
@@ -186,5 +196,49 @@ summary{cursor:pointer;font-weight:700;min-height:28px}
  </div>
 </div></section>
 
+<script>
+{
+const OPTS=['hier','hierin','hierher','hierhin'];
+const Q=[
+ {a:'Kannst du kurz ',b:' kommen? Ich brauche deine Hilfe.',k:'hierher',fr:'Tu peux venir ici un instant ? J’ai besoin de ton aide.',why:'„kommen“ = Bewegung zu mir (Sprecher) → <span class="her">her</span>.'},
+ {a:'Die Präsentation ist gut. ',b:' fehlt aber eine klare Zusammenfassung.',k:'hierin',cap:true,fr:'La présentation est bonne. Il y manque cependant un résumé clair.',why:'= „in dieser Präsentation“ → <span class="in">hierin</span> (abstrakt, eher formell).'},
+ {a:'Häng die Jacke einfach ',b:', an den Haken.',k:'hierhin',fr:'Accroche simplement la veste ici, au portemanteau.',why:'„hängen“ = an eine Stelle bringen → <em>wohin?</em> → <span class="hin">hin</span>.'},
+ {a:'Wohnst du schon lange ',b:'?',k:'hier',fr:'Tu habites ici depuis longtemps ?',why:'„wohnen“ = keine Bewegung → <em>wo?</em> → <span class="h">hier</span>.'},
+ {a:'Wie bist du gestern ',b:' gekommen – mit dem Bus?',k:'hierher',fr:'Comment es-tu venu ici hier – en bus ?',why:'Bewegung zu dem Ort, wo ich bin → <span class="her">her</span>.'},
+ {a:'Stell deinen Laptop ruhig ',b:', da ist eine Steckdose.',k:'hierhin',fr:'Pose ton ordinateur ici, il y a une prise.',why:'„stellen“ = an diese Stelle bringen → <span class="hin">hin</span>.'}
+];
+const HINT={
+ hier:'„hier“ steht nur ohne Bewegung (<em>wo?</em>). Gibt es hier eine Bewegung?',
+ hierin:'„hierin“ bedeutet „in diesem (Text, Punkt)“. Passt das hier?',
+ hierher:'„hierher“ = Bewegung <strong>zu mir</strong>. Kommt hier etwas zum Sprecher?',
+ hierhin:'„hierhin“ = etwas <strong>an diese Stelle</strong> bringen. Wird hier etwas hingelegt/-gestellt?'
+};
+const cap=w=>w[0].toUpperCase()+w.slice(1);
+const quiz=document.getElementById('quiz'),score=document.getElementById('score');
+const render=()=>{
+ quiz.innerHTML=Q.map((q,i)=>`<li data-i="${i}"><div class="sent">${q.a}<span class="slot" id="s${i}">&nbsp;</span>${q.b}</div><div class="opts">${OPTS.map(o=>`<button type="button" data-o="${o}">${q.cap?cap(o):o}</button>`).join('')}</div><p class="fb" id="f${i}" aria-live="polite"></p></li>`).join('');
+ update();
+};
+const update=()=>{const n=quiz.querySelectorAll('li.right').length;score.textContent=n===Q.length?'Super! Alle 6 richtig 🎉':`${n} von ${Q.length} gelöst`};
+quiz.addEventListener('click',e=>{
+ const b=e.target.closest('button[data-o]');if(!b)return;
+ const li=b.closest('li'),i=+li.dataset.i,q=Q[i],o=b.dataset.o;
+ if(li.classList.contains('right'))return;
+ const slot=document.getElementById('s'+i),fb=document.getElementById('f'+i);
+ slot.textContent=q.cap?cap(o):o;
+ if(o===q.k){
+  li.classList.remove('tried');li.classList.add('right');b.classList.add('yes');
+  li.querySelectorAll('button').forEach(x=>x.disabled=true);
+  fb.className='fb ok';fb.innerHTML=`✓ Richtig! ${q.why}<span class="fr">${q.fr}</span>`;
+ }else{
+  li.classList.add('tried');b.classList.add('no');b.disabled=true;
+  fb.className='fb bad';fb.innerHTML=`✗ Noch nicht. ${HINT[o]}`;
+ }
+ update();
+});
+document.getElementById('reset').addEventListener('click',render);
+render();
+}
+</script>
 </body>
 </html>
