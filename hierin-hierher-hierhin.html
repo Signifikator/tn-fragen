@@ -200,12 +200,12 @@ summary{cursor:pointer;font-weight:700;min-height:28px}
 {
 const OPTS=['hier','hierin','hierher','hierhin'];
 const Q=[
- {a:'Kannst du kurz ',b:' kommen? Ich brauche deine Hilfe.',k:'hierher',fr:'Tu peux venir ici un instant ? J’ai besoin de ton aide.',why:'„kommen“ = Bewegung zu mir (Sprecher) → <span class="her">her</span>.'},
- {a:'Die Präsentation ist gut. ',b:' fehlt aber eine klare Zusammenfassung.',k:'hierin',cap:true,fr:'La présentation est bonne. Il y manque cependant un résumé clair.',why:'= „in dieser Präsentation“ → <span class="in">hierin</span> (abstrakt, eher formell).'},
- {a:'Häng die Jacke einfach ',b:', an den Haken.',k:'hierhin',fr:'Accroche simplement la veste ici, au portemanteau.',why:'„hängen“ = an eine Stelle bringen → <em>wohin?</em> → <span class="hin">hin</span>.'},
- {a:'Wohnst du schon lange ',b:'?',k:'hier',fr:'Tu habites ici depuis longtemps ?',why:'„wohnen“ = keine Bewegung → <em>wo?</em> → <span class="h">hier</span>.'},
- {a:'Wie bist du gestern ',b:' gekommen – mit dem Bus?',k:'hierher',fr:'Comment es-tu venu ici hier – en bus ?',why:'Bewegung zu dem Ort, wo ich bin → <span class="her">her</span>.'},
- {a:'Stell deinen Laptop ruhig ',b:', da ist eine Steckdose.',k:'hierhin',fr:'Pose ton ordinateur ici, il y a une prise.',why:'„stellen“ = an diese Stelle bringen → <span class="hin">hin</span>.'}
+ {a:'Kannst du kurz ',b:' (zu mir) kommen? Ich brauche deine Hilfe.',k:['hierher'],fr:'Tu peux venir ici un instant ? J’ai besoin de ton aide.',why:'„kommen“ = Bewegung zu mir (Sprecher) → <span class="her">her</span>.'},
+ {a:'Viele wollen Geld sparen, aber genau ',b:' liegt das Problem.',k:['hierin'],fr:'Beaucoup veulent économiser de l’argent, mais c’est précisément là que réside le problème.',why:'= „in diesem Punkt“ (im Geldsparen) → <span class="in">hierin</span> (abstrakt, eher formell).'},
+ {a:'Häng die Jacke einfach ',b:', an den Haken.',k:['hierhin','hierher'],fr:'Accroche simplement la veste ici, au portemanteau.',why:'„hängen“ = an eine Stelle bringen → <em>wohin?</em> Hier sind <span class="hin">hierhin</span> und <span class="her">hierher</span> beide richtig.'},
+ {a:'Wohnst du schon lange ',b:'?',k:['hier'],fr:'Tu habites ici depuis longtemps ?',why:'„wohnen“ = keine Bewegung → <em>wo?</em> → <span class="h">hier</span>.'},
+ {a:'Wie bist du gestern ',b:' gekommen – mit dem Bus?',k:['hierher'],fr:'Comment es-tu venu ici hier – en bus ?',why:'Bewegung zu dem Ort, wo ich bin → <span class="her">her</span>.'},
+ {a:'Stell deinen Laptop ruhig ',b:', da ist eine Steckdose.',k:['hierhin','hierher'],fr:'Pose ton ordinateur ici, il y a une prise.',why:'„stellen“ = an diese Stelle bringen → <em>wohin?</em> Hier sind <span class="hin">hierhin</span> und <span class="her">hierher</span> beide richtig.'}
 ];
 const HINT={
  hier:'„hier“ steht nur ohne Bewegung (<em>wo?</em>). Gibt es hier eine Bewegung?',
@@ -226,7 +226,7 @@ quiz.addEventListener('click',e=>{
  if(li.classList.contains('right'))return;
  const slot=document.getElementById('s'+i),fb=document.getElementById('f'+i);
  slot.textContent=q.cap?cap(o):o;
- if(o===q.k){
+ if(q.k.includes(o)){
   li.classList.remove('tried');li.classList.add('right');b.classList.add('yes');
   li.querySelectorAll('button').forEach(x=>x.disabled=true);
   fb.className='fb ok';fb.innerHTML=`✓ Richtig! ${q.why}<span class="fr">${q.fr}</span>`;
